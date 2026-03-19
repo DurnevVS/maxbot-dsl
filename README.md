@@ -1,15 +1,21 @@
 # maxbot-dsl
 
 The lightweight Go DSL for creating event-driven MAX messenger bots with easy routing and handler management.
+
+## Requirements
+
+maxbot-dsl is a framework 🙂 built **on top of the official Go MAX client**: [max-bot-api-client-go](https://github.com/max-messenger/max-bot-api-client-go) licensed under Apache License 2.0.
+
+## Contributing
 Open to contributors!
 
-Installation:
+## Installation:
 
 ```bash
 go get github.com/maxbot-dsl/maxbot-dsl/v0.1.1
 ```
 
-Example:
+## Example:
 
 ```go
 func main() {
