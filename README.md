@@ -6,7 +6,7 @@ Open to contributors!
 Installation:
 
 ```bash
-go get github.com/maxbot-dsl/maxbot-dsl/v0.1.0
+go get github.com/maxbot-dsl/maxbot-dsl/v0.1.1
 ```
 
 Example:
