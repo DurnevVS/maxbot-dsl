@@ -4,11 +4,11 @@ import (
 	"context"
 	"strings"
 
-	"github.com/DurnevVS/maxbot-dsl/handlers"
+	"github.com/DurnevVS/maxbot-dsl/routers"
 	"github.com/max-messenger/max-bot-api-client-go/schemes"
 )
 
-func IsCommand(cmd string) handlers.FilterFunc[*schemes.MessageCreatedUpdate] {
+func IsCommand(cmd string) routers.FilterFunc[*schemes.MessageCreatedUpdate] {
 	return func(update *schemes.MessageCreatedUpdate, ctx context.Context) (bool, error) {
 		text := update.Message.Body.Text
 		if strings.HasPrefix(text, cmd) {

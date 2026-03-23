@@ -7,7 +7,7 @@ import (
 	"syscall"
 
 	"github.com/DurnevVS/maxbot-dsl/filters"
-	"github.com/DurnevVS/maxbot-dsl/handlers"
+	"github.com/DurnevVS/maxbot-dsl/routers"
 
 	maxbot "github.com/max-messenger/max-bot-api-client-go"
 	"github.com/max-messenger/max-bot-api-client-go/schemes"
@@ -24,7 +24,7 @@ func main() {
 		panic(err)
 	}
 
-	dispatcher := handlers.
+	dispatcher := routers.
 		NewDispatcher().
 		AddRouter(StartBot()).
 		AddRouter(StartCommand())
@@ -34,9 +34,9 @@ func main() {
 	}
 }
 
-func StartBot() *handlers.Router {
-	router := handlers.NewRouter()
-	router.OnBotStarted(func(rb *handlers.RouteBuilder[*schemes.BotStartedUpdate]) {
+func StartBot() *routers.Router {
+	router := routers.NewRouter()
+	router.OnBotStarted(func(rb *routers.RouteBuilder[*schemes.BotStartedUpdate]) {
 		rb.Handle(func(api *maxbot.Api, update *schemes.BotStartedUpdate, ctx context.Context) error {
 			message := maxbot.NewMessage().
 				SetChat(update.GetChatID()).
@@ -50,9 +50,9 @@ func StartBot() *handlers.Router {
 	return router
 }
 
-func StartCommand() *handlers.Router {
-	router := handlers.NewRouter()
-	router.OnMessage(func(rb *handlers.RouteBuilder[*schemes.MessageCreatedUpdate]) {
+func StartCommand() *routers.Router {
+	router := routers.NewRouter()
+	router.OnMessage(func(rb *routers.RouteBuilder[*schemes.MessageCreatedUpdate]) {
 		rb.Filter(filters.IsCommand("/start")).
 			Handle(func(api *maxbot.Api, update *schemes.MessageCreatedUpdate, ctx context.Context) error {
 				message := maxbot.NewMessage().
