@@ -3,6 +3,7 @@ package routers
 import (
 	"context"
 
+	fsm "github.com/DurnevVS/maxbot-dsl/fsm/storage"
 	maxbot "github.com/max-messenger/max-bot-api-client-go"
 	"github.com/max-messenger/max-bot-api-client-go/schemes"
 )
@@ -42,24 +43,21 @@ func (r *Router) Resolve(
 	api *maxbot.Api,
 	update schemes.UpdateInterface,
 	ctx context.Context,
-) error {
+	fsm *fsm.FSMContext,
+) (bool, error) {
 
 	switch upd := update.(type) {
-
 	case *schemes.BotStartedUpdate:
-		return r.botStartObserver.Trigger(api, upd, ctx)
-
+		return r.botStartObserver.Trigger(api, upd, ctx, fsm)
 	case *schemes.MessageCreatedUpdate:
-		return r.messageObserver.Trigger(api, upd, ctx)
-
+		return r.messageObserver.Trigger(api, upd, ctx, fsm)
 	case *schemes.MessageCallbackUpdate:
-		return r.callbackObserver.Trigger(api, upd, ctx)
-
+		return r.callbackObserver.Trigger(api, upd, ctx, fsm)
 	case *schemes.BotStopedFromChatUpdate:
-		return r.botEndObserver.Trigger(api, upd, ctx)
+		return r.botEndObserver.Trigger(api, upd, ctx, fsm)
 	}
 
-	return nil
+	return false, nil
 }
 
 func (r *Router) OnBotStarted(build func(*RouteBuilder[*schemes.BotStartedUpdate])) {
