@@ -27,61 +27,85 @@ func main() {
 
 	dispatcher := routers.
 		NewDispatcher(fsm.NewMemoryStorage()).
-		AddRouters(StartBot(), SayMyName(), StartCommand())
+		AddRouters(StartRouter(), BackToMainMenu())
 
 	for update := range api.GetUpdates(ctx) {
 		go dispatcher.Dispatch(api, update, ctx)
 	}
 }
 
-func StartBot() *routers.Router {
+func StartRouter() *routers.Router {
 	router := routers.NewRouter()
+
 	router.OnBotStarted(func(rb *routers.RouteBuilder[*schemes.BotStartedUpdate]) {
 		rb.Handle(func(api *maxbot.Api, update *schemes.BotStartedUpdate, ctx context.Context, fsm *fsm.FSMContext) error {
-			message := maxbot.NewMessage().
-				SetChat(update.GetChatID()).
-				SetText("Hello, world!")
-
-			api.Messages.Send(ctx, message)
-			return nil
+			return SendMainMenu(api, update, ctx, fsm)
 		})
 	})
 
-	return router
-}
-
-func StartCommand() *routers.Router {
-	router := routers.NewRouter()
 	router.OnMessage(func(rb *routers.RouteBuilder[*schemes.MessageCreatedUpdate]) {
 		rb.Filter(filters.IsCommand("/start")).
 			Handle(func(api *maxbot.Api, update *schemes.MessageCreatedUpdate, ctx context.Context, fsm *fsm.FSMContext) error {
-				message := maxbot.NewMessage().
-					SetChat(update.GetChatID()).
-					SetText("Processing /start")
+				return SendMainMenu(api, update, ctx, fsm)
+			})
+	})
 
-				api.Messages.Send(ctx, message)
-
-				fsm.SetState(ctx, "SayMyName")
-
-				return nil
+	router.OnCallback(func(rb *routers.RouteBuilder[*schemes.MessageCallbackUpdate]) {
+		rb.Filter(filters.Callback("Idle")).
+			Handle(func(api *maxbot.Api, update *schemes.MessageCallbackUpdate, ctx context.Context, fsm *fsm.FSMContext) error {
+				return EditToMainMenu(api, update, ctx, fsm)
 			})
 	})
 
 	return router
 }
 
-func SayMyName() *routers.Router {
+const menuMsg = "Processing main menu handler. Press The Button!"
+
+func SendMainMenu(api *maxbot.Api, update schemes.UpdateInterface, ctx context.Context, fsm *fsm.FSMContext) error {
+
+	kb := maxbot.Keyboard{}
+	kb.AddRow().AddCallback("The Button", schemes.DEFAULT, "Button")
+
+	message := maxbot.NewMessage().
+		SetChat(update.GetChatID()).
+		AddKeyboard(&kb).
+		SetText(menuMsg)
+
+	api.Messages.Send(ctx, message)
+	fsm.Clear(ctx)
+	return nil
+}
+
+func EditToMainMenu(api *maxbot.Api, update *schemes.MessageCallbackUpdate, ctx context.Context, fsm *fsm.FSMContext) error {
+
+	kb := maxbot.Keyboard{}
+	kb.AddRow().AddCallback("The Button", schemes.DEFAULT, "Button")
+
+	message := maxbot.NewMessage().
+		SetChat(update.GetChatID()).
+		AddKeyboard(&kb).
+		SetText(menuMsg)
+
+	api.Messages.EditMessage(ctx, update.Message.Body.Mid, message)
+	fsm.Clear(ctx)
+	return nil
+}
+
+func BackToMainMenu() *routers.Router {
 	router := routers.NewRouter()
-	router.OnMessage(func(rb *routers.RouteBuilder[*schemes.MessageCreatedUpdate]) {
-		rb.Filter(filters.IsCommand("/start")).Filter(filters.StateFilter[*schemes.MessageCreatedUpdate]("SayMyName")).
-			Handle(func(api *maxbot.Api, update *schemes.MessageCreatedUpdate, ctx context.Context, fsm *fsm.FSMContext) error {
+
+	router.OnCallback(func(rb *routers.RouteBuilder[*schemes.MessageCallbackUpdate]) {
+		rb.Filter(filters.Callback("Button")).
+			Handle(func(api *maxbot.Api, update *schemes.MessageCallbackUpdate, ctx context.Context, fsm *fsm.FSMContext) error {
+				kb := maxbot.Keyboard{}
+				kb.AddRow().AddCallback("Back", schemes.DEFAULT, "Idle")
 				message := maxbot.NewMessage().
 					SetChat(update.GetChatID()).
-					SetText("Heinzerberg!")
+					AddKeyboard(&kb).
+					SetText("Back to main menu")
 
-				api.Messages.Send(ctx, message)
-
-				fsm.Clear(ctx)
+				api.Messages.EditMessage(ctx, update.Message.Body.Mid, message)
 
 				return nil
 			})
