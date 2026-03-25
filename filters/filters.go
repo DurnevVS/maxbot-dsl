@@ -24,3 +24,13 @@ func IsCommand(cmd string) routers.FilterFunc[*schemes.MessageCreatedUpdate] {
 		return false, nil
 	}
 }
+
+func Callback(cb string) routers.FilterFunc[*schemes.MessageCallbackUpdate] {
+	return func(update *schemes.MessageCallbackUpdate, ctx context.Context, fsm *fsm.FSMContext) (bool, error) {
+		text := update.Callback.Payload
+		if strings.HasPrefix(text, cb) {
+			return true, nil
+		}
+		return false, nil
+	}
+}
