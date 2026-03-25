@@ -12,7 +12,7 @@ Open to contributors!
 ## Installation:
 
 ```bash
-go get github.com/maxbot-dsl/maxbot-dsl/v0.1.1
+go get github.com/maxbot-dsl/maxbot-dsl/v0.2.1
 ```
 
 ## Example:
@@ -29,20 +29,19 @@ func main() {
 		panic(err)
 	}
 
-	dispatcher := handlers.
-		NewDispatcher().
-		AddRouter(StartBot()).
-		AddRouter(StartCommand())
+	dispatcher := routers.
+		NewDispatcher(fsm.NewMemoryStorage()).
+		AddRouters(StartBot(), SayMyName(), StartCommand())
 
 	for update := range api.GetUpdates(ctx) {
 		go dispatcher.Dispatch(api, update, ctx)
 	}
 }
 
-func StartBot() *handlers.Router {
-	router := handlers.NewRouter()
-	router.OnBotStarted(func(rb *handlers.RouteBuilder[*schemes.BotStartedUpdate]) {
-		rb.Handle(func(api *maxbot.Api, update *schemes.BotStartedUpdate, ctx context.Context) error {
+func StartBot() *routers.Router {
+	router := routers.NewRouter()
+	router.OnBotStarted(func(rb *routers.RouteBuilder[*schemes.BotStartedUpdate]) {
+		rb.Handle(func(api *maxbot.Api, update *schemes.BotStartedUpdate, ctx context.Context, fsm *fsm.FSMContext) error {
 			message := maxbot.NewMessage().
 				SetChat(update.GetChatID()).
 				SetText("Hello, world!")
@@ -55,16 +54,39 @@ func StartBot() *handlers.Router {
 	return router
 }
 
-func StartCommand() *handlers.Router {
-	router := handlers.NewRouter()
-	router.OnMessage(func(rb *handlers.RouteBuilder[*schemes.MessageCreatedUpdate]) {
+func StartCommand() *routers.Router {
+	router := routers.NewRouter()
+	router.OnMessage(func(rb *routers.RouteBuilder[*schemes.MessageCreatedUpdate]) {
 		rb.Filter(filters.IsCommand("/start")).
-			Handle(func(api *maxbot.Api, update *schemes.MessageCreatedUpdate, ctx context.Context) error {
+			Handle(func(api *maxbot.Api, update *schemes.MessageCreatedUpdate, ctx context.Context, fsm *fsm.FSMContext) error {
 				message := maxbot.NewMessage().
 					SetChat(update.GetChatID()).
 					SetText("Processing /start")
 
 				api.Messages.Send(ctx, message)
+
+				fsm.SetState(ctx, "SayMyName")
+
+				return nil
+			})
+	})
+
+	return router
+}
+
+func SayMyName() *routers.Router {
+	router := routers.NewRouter()
+	router.OnMessage(func(rb *routers.RouteBuilder[*schemes.MessageCreatedUpdate]) {
+		rb.Filter(filters.IsCommand("/start")).Filter(filters.StateFilter[*schemes.MessageCreatedUpdate]("SayMyName")).
+			Handle(func(api *maxbot.Api, update *schemes.MessageCreatedUpdate, ctx context.Context, fsm *fsm.FSMContext) error {
+				message := maxbot.NewMessage().
+					SetChat(update.GetChatID()).
+					SetText("Heinzerberg!")
+
+				api.Messages.Send(ctx, message)
+
+				fsm.Clear(ctx)
+
 				return nil
 			})
 	})
