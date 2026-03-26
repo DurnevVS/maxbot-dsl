@@ -77,7 +77,6 @@ func SendMainMenu(api *maxbot.Api, update schemes.UpdateInterface, ctx context.C
 		SetText(menuMsg)
 
 	api.Messages.Send(ctx, message)
-	fsm.Clear(ctx)
 	return nil
 }
 
@@ -92,7 +91,6 @@ func EditToMainMenu(api *maxbot.Api, update *schemes.MessageCallbackUpdate, ctx 
 		SetText(menuMsg)
 
 	api.Messages.EditMessage(ctx, update.Message.Body.Mid, message)
-	fsm.Clear(ctx)
 	return nil
 }
 
