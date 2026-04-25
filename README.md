@@ -12,7 +12,7 @@ Open to contributors!
 ## Installation:
 
 ```bash
-go get github.com/DurnevVS/maxbot-dsl@v0.2.2
+go get github.com/DurnevVS/maxbot-dsl@v0.2.3
 ```
 
 ## Example:
